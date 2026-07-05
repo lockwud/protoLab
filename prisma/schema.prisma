@@ -1,0 +1,236 @@
+// NOTE: This schema is the canonical source of truth for the database
+// structure. In this build sandbox, `prisma generate` / `migrate dev` cannot
+// reach binaries.prisma.sh (blocked by sandbox network policy), so the app's
+// data layer talks to Postgres via `pg` directly against prisma/init.sql
+// (hand-derived from this exact schema). On a normal machine with internet
+// access, run `npx prisma generate` and `npx prisma migrate dev` as usual --
+// see README "Using real Prisma Client" section.
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  STUDENT
+  LECTURER
+  ADMIN
+}
+
+enum EnrollmentStatus {
+  ACTIVE
+  COMPLETED
+  DROPPED
+}
+
+enum AssignmentStatus {
+  DRAFT
+  PUBLISHED
+  CLOSED
+}
+
+enum SubmissionStatus {
+  NOT_SUBMITTED
+  SUBMITTED
+  UNDER_REVIEW
+  REVISION_REQUESTED
+  APPROVED
+}
+
+enum MilestoneStatus {
+  PENDING
+  IN_PROGRESS
+  DONE
+  BLOCKED
+}
+
+enum NotificationType {
+  INFO
+  ASSIGNMENT
+  FEEDBACK
+  MILESTONE
+  SYSTEM
+}
+
+model User {
+  id            String   @id @default(cuid())
+  name          String
+  email         String   @unique
+  passwordHash  String
+  role          Role     @default(STUDENT)
+  avatarUrl     String?
+  bio           String?
+  githubUsername String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  coursesTeaching   Course[]           @relation("CourseLecturer")
+  enrollments       Enrollment[]
+  submissions       Submission[]
+  projects          Project[]
+  feedbackGiven     Feedback[]         @relation("FeedbackAuthor")
+  milestones        Milestone[]
+  notifications     Notification[]
+  documents         Document[]
+  repositoryEntries InnovationRepository[] @relation("RepoAuthor")
+
+  @@index([email])
+}
+
+model Course {
+  id          String   @id @default(cuid())
+  title       String
+  code        String   @unique
+  description String?
+  lecturerId  String
+  lecturer    User     @relation("CourseLecturer", fields: [lecturerId], references: [id])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  enrollments Enrollment[]
+  assignments Assignment[]
+}
+
+model Enrollment {
+  id        String           @id @default(cuid())
+  studentId String
+  student   User             @relation(fields: [studentId], references: [id])
+  courseId  String
+  course    Course           @relation(fields: [courseId], references: [id])
+  status    EnrollmentStatus @default(ACTIVE)
+  createdAt DateTime         @default(now())
+
+  @@unique([studentId, courseId])
+}
+
+model Assignment {
+  id          String           @id @default(cuid())
+  courseId    String
+  course      Course           @relation(fields: [courseId], references: [id])
+  title       String
+  description String
+  status      AssignmentStatus @default(DRAFT)
+  dueDate     DateTime?
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  submissions Submission[]
+  projects    Project[]
+}
+
+model Submission {
+  id           String           @id @default(cuid())
+  assignmentId String
+  assignment   Assignment       @relation(fields: [assignmentId], references: [id])
+  studentId    String
+  student      User             @relation(fields: [studentId], references: [id])
+  content      String
+  fileUrl      String?
+  status       SubmissionStatus @default(NOT_SUBMITTED)
+  grade        Float?
+  submittedAt  DateTime?
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+
+  feedback     Feedback[]
+
+  @@unique([assignmentId, studentId])
+}
+
+model Project {
+  id            String   @id @default(cuid())
+  title         String
+  summary       String
+  problemStatement String?
+  ownerId       String
+  owner         User     @relation(fields: [ownerId], references: [id])
+  assignmentId  String?
+  assignment    Assignment? @relation(fields: [assignmentId], references: [id])
+  githubRepoUrl String?
+  status        String   @default("PLANNING")
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  milestones    Milestone[]
+  documents     Document[]
+  feedback      Feedback[]
+  aiSessions    AiSession[]
+  repositoryEntry InnovationRepository?
+}
+
+model Milestone {
+  id          String          @id @default(cuid())
+  projectId   String
+  project     Project         @relation(fields: [projectId], references: [id])
+  title       String
+  description String?
+  status      MilestoneStatus @default(PENDING)
+  dueDate     DateTime?
+  ownerId     String
+  owner       User            @relation(fields: [ownerId], references: [id])
+  order       Int             @default(0)
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+}
+
+model Feedback {
+  id           String      @id @default(cuid())
+  projectId    String?
+  project      Project?    @relation(fields: [projectId], references: [id])
+  submissionId String?
+  submission   Submission? @relation(fields: [submissionId], references: [id])
+  authorId     String
+  author       User        @relation("FeedbackAuthor", fields: [authorId], references: [id])
+  content      String
+  rating       Int?
+  createdAt    DateTime    @default(now())
+}
+
+model Document {
+  id        String   @id @default(cuid())
+  projectId String
+  project   Project  @relation(fields: [projectId], references: [id])
+  authorId  String
+  author    User     @relation(fields: [authorId], references: [id])
+  title     String
+  type      String   @default("REPORT")
+  content   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model AiSession {
+  id        String   @id @default(cuid())
+  projectId String?
+  project   Project? @relation(fields: [projectId], references: [id])
+  prompt    String
+  response  String
+  provider  String   @default("claude")
+  createdAt DateTime @default(now())
+}
+
+model InnovationRepository {
+  id          String   @id @default(cuid())
+  projectId   String   @unique
+  project     Project  @relation(fields: [projectId], references: [id])
+  authorId    String
+  author      User     @relation("RepoAuthor", fields: [authorId], references: [id])
+  featured    Boolean  @default(false)
+  tags        String[]
+  publishedAt DateTime @default(now())
+}
+
+model Notification {
+  id        String           @id @default(cuid())
+  userId    String
+  user      User             @relation(fields: [userId], references: [id])
+  type      NotificationType @default(INFO)
+  title     String
+  message   String
+  read      Boolean          @default(false)
+  link      String?
+  createdAt DateTime         @default(now())
+}

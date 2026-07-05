@@ -1,0 +1,83 @@
+@import "tailwindcss";
+
+:root {
+  --paper: #f6f5f1;
+  --ink: #14161f;
+  --ink-soft: #4a4d5a;
+  --line: #dcdad2;
+  --indigo: #3730e0;
+  --indigo-ink: #211c8f;
+  --signal: #c6ff3d;
+  --signal-ink: #4b5b00;
+  --amber: #ff9d2e;
+  --danger: #d5432b;
+  --card: #ffffff;
+
+  --background: var(--paper);
+  --foreground: var(--ink);
+  --primary: var(--indigo);
+  --primary-foreground: #ffffff;
+  --secondary: #eceaf9;
+  --secondary-foreground: var(--indigo-ink);
+  --muted: #eeece6;
+  --muted-foreground: var(--ink-soft);
+  --accent: var(--signal);
+  --accent-foreground: var(--signal-ink);
+  --destructive: var(--danger);
+  --destructive-foreground: #ffffff;
+  --border: var(--line);
+  --input: var(--line);
+  --ring: var(--indigo);
+  --radius: 0.5rem;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --radius-lg: var(--radius);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-sm: calc(var(--radius) - 4px);
+  --font-display: "Space Grotesk", "Arial Narrow", sans-serif;
+  --font-sans: "Inter", system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+}
+
+body {
+  background:
+    linear-gradient(var(--line) 1px, transparent 1px) 0 0 / 100% 28px,
+    var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans);
+}
+
+.font-display {
+  font-family: var(--font-display);
+}
+
+.font-mono {
+  font-family: var(--font-mono);
+}
+
+* {
+  border-color: var(--border);
+}
+
+::selection {
+  background: var(--signal);
+  color: var(--signal-ink);
+}
