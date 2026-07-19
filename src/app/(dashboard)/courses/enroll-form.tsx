@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 
 export function EnrollForm() {
   const router = useRouter();
-  const [courseId, setCourseId] = useState("");
+  const [courseKey, setCourseKey] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -15,13 +15,13 @@ export function EnrollForm() {
     setError(null);
     setLoading(true);
     try {
-      const res = await fetch(`/api/courses/${courseId}`, { method: "POST", headers: { "content-type": "application/json" }, body: "{}" });
+      const res = await fetch(`/api/courses/${encodeURIComponent(courseKey.trim())}`, { method: "POST", headers: { "content-type": "application/json" }, body: "{}" });
       const data = await res.json();
       if (!res.ok) {
         setError(data.error ?? "Could not enroll.");
         return;
       }
-      setCourseId("");
+      setCourseKey("");
       router.refresh();
     } catch {
       setError("Network error.");
@@ -33,10 +33,10 @@ export function EnrollForm() {
   return (
     <form onSubmit={onSubmit} className="flex items-end gap-2">
       <div className="flex flex-col gap-1.5">
-        <label className="text-sm font-medium">Enroll by course ID</label>
-        <Input value={courseId} onChange={(e) => setCourseId(e.target.value)} placeholder="crs_..." className="w-64" />
+        <label className="text-sm font-medium">Enroll by course code or ID</label>
+        <Input value={courseKey} onChange={(e) => setCourseKey(e.target.value)} placeholder="RMT026 or crs_..." className="w-64" />
       </div>
-      <Button type="submit" variant="outline" disabled={loading || !courseId}>
+      <Button type="submit" variant="outline" disabled={loading || !courseKey.trim()}>
         {loading ? "Enrolling…" : "Enroll"}
       </Button>
       {error && <p className="text-sm text-destructive">{error}</p>}

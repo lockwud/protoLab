@@ -59,6 +59,7 @@ export interface Submission {
   id: string;
   assignmentId: string;
   studentId: string;
+  projectId: string | null;
   content: string;
   fileUrl: string | null;
   status: SubmissionStatus;

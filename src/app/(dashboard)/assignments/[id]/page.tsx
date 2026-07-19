@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
+import Link from "next/link";
 import { getCurrentUser } from "@/lib/session";
-import { getAssignment, getCourse, getSubmissionForStudent, listCoursesForStudent, listSubmissionsForAssignment } from "@/lib/data";
+import { getAssignment, getCourse, getSubmissionForStudent, listCoursesForStudent, listProjectsForOwner, listSubmissionsForAssignment } from "@/lib/data";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { SubmissionForm } from "./submission-form";
@@ -43,14 +44,17 @@ export default async function AssignmentDetailPage({ params }: { params: Promise
 }
 
 async function StudentSubmissionSection({ assignmentId, studentId }: { assignmentId: string; studentId: string }) {
-  const submission = await getSubmissionForStudent(assignmentId, studentId);
+  const [submission, projects] = await Promise.all([
+    getSubmissionForStudent(assignmentId, studentId),
+    listProjectsForOwner(studentId),
+  ]);
   return (
     <Card>
       <CardHeader>
         <CardTitle className="text-base">Your submission</CardTitle>
       </CardHeader>
       <CardContent>
-        <SubmissionForm assignmentId={assignmentId} existing={submission} />
+        <SubmissionForm assignmentId={assignmentId} existing={submission} projects={projects} />
       </CardContent>
     </Card>
   );
@@ -79,6 +83,11 @@ async function LecturerSubmissionsSection({ assignmentId }: { assignmentId: stri
               <a href={s.fileUrl} className="mt-1 block text-sm text-primary underline" target="_blank" rel="noreferrer">
                 Attached file
               </a>
+            )}
+            {s.projectId && (
+              <Link href={`/projects/${s.projectId}`} className="mt-3 inline-flex rounded-md bg-foreground px-3 py-2 text-xs font-medium text-background hover:bg-foreground/90">
+                Test submitted prototype
+              </Link>
             )}
             <div className="mt-3">
               <GradeForm submissionId={s.id} />

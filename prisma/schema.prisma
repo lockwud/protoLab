@@ -140,6 +140,8 @@ model Submission {
   assignment   Assignment       @relation(fields: [assignmentId], references: [id])
   studentId    String
   student      User             @relation(fields: [studentId], references: [id])
+  projectId    String?
+  project      Project?         @relation(fields: [projectId], references: [id])
   content      String
   fileUrl      String?
   status       SubmissionStatus @default(NOT_SUBMITTED)
@@ -170,6 +172,7 @@ model Project {
   milestones    Milestone[]
   documents     Document[]
   feedback      Feedback[]
+  submissions   Submission[]
   aiSessions    AiSession[]
   repositoryEntry InnovationRepository?
   labWorkspace  LabWorkspace?

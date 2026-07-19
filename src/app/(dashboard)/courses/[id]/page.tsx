@@ -75,6 +75,11 @@ export default async function CourseDetailPage({ params }: { params: Promise<{ i
                   <div className="text-muted-foreground">{e.studentEmail}</div>
                 </div>
               ))}
+              <div className="mt-3 rounded-md border border-border bg-background p-3">
+                <p className="text-xs font-medium">Student enrollment code</p>
+                <p className="mt-1 font-mono text-sm font-semibold">{course.code}</p>
+                <p className="mt-2 text-[11px] text-muted-foreground">Students can enroll with this code or the internal ID.</p>
+              </div>
               <p className="mt-2 font-mono text-[11px] text-muted-foreground">Course ID: {course.id}</p>
             </CardContent>
           </Card>

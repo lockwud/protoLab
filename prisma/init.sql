@@ -86,6 +86,7 @@ CREATE TABLE IF NOT EXISTS "Submission" (
   id             TEXT PRIMARY KEY,
   "assignmentId" TEXT NOT NULL REFERENCES "Assignment"(id),
   "studentId"    TEXT NOT NULL REFERENCES "User"(id),
+  "projectId"    TEXT REFERENCES "Project"(id),
   content        TEXT NOT NULL,
   "fileUrl"      TEXT,
   status         "SubmissionStatus" NOT NULL DEFAULT 'NOT_SUBMITTED',
@@ -95,6 +96,8 @@ CREATE TABLE IF NOT EXISTS "Submission" (
   "updatedAt"    TIMESTAMPTZ NOT NULL DEFAULT now(),
   UNIQUE ("assignmentId", "studentId")
 );
+
+ALTER TABLE "Submission" ADD COLUMN IF NOT EXISTS "projectId" TEXT REFERENCES "Project"(id);
 
 CREATE TABLE IF NOT EXISTS "Project" (
   id                 TEXT PRIMARY KEY,

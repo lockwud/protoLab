@@ -8,6 +8,7 @@ import { notify } from "@/lib/data";
 const submitSchema = z.object({
   content: z.string().min(1),
   fileUrl: z.string().url().optional(),
+  projectId: z.string().optional(),
 });
 
 export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -34,14 +35,21 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     );
     if (!assignment[0]) return NextResponse.json({ error: "Assignment not found for your enrolled courses." }, { status: 404 });
     if (assignment[0].status !== "PUBLISHED") return NextResponse.json({ error: "This assignment is not open for submission." }, { status: 403 });
+    if (parsed.data.projectId) {
+      const project = await query<{ id: string }>(`SELECT id FROM "Project" WHERE id = $1 AND "ownerId" = $2`, [
+        parsed.data.projectId,
+        session.userId,
+      ]);
+      if (!project[0]) return NextResponse.json({ error: "Selected prototype was not found for your account." }, { status: 404 });
+    }
 
     const rows = await query(
-      `INSERT INTO "Submission" (id, "assignmentId", "studentId", content, "fileUrl", status, "submittedAt")
-       VALUES ($1, $2, $3, $4, $5, 'SUBMITTED', now())
+      `INSERT INTO "Submission" (id, "assignmentId", "studentId", "projectId", content, "fileUrl", status, "submittedAt")
+       VALUES ($1, $2, $3, $4, $5, $6, 'SUBMITTED', now())
        ON CONFLICT ("assignmentId", "studentId")
-       DO UPDATE SET content = $4, "fileUrl" = $5, status = 'SUBMITTED', "submittedAt" = now(), "updatedAt" = now()
+       DO UPDATE SET "projectId" = $4, content = $5, "fileUrl" = $6, status = 'SUBMITTED', "submittedAt" = now(), "updatedAt" = now()
        RETURNING *`,
-      [createId("sub_"), assignmentId, session.userId, parsed.data.content, parsed.data.fileUrl ?? null]
+      [createId("sub_"), assignmentId, session.userId, parsed.data.projectId ?? null, parsed.data.content, parsed.data.fileUrl ?? null]
     );
 
     const course = await query<{ lecturerId: string; title: string }>(

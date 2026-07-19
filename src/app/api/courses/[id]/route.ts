@@ -41,15 +41,20 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   // Self-enrollment for students, or lecturer enrolling a student by email.
   const session = await getSessionPayload();
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  const { id: courseId } = await params;
+  const { id } = await params;
+  const courseKey = decodeURIComponent(id).trim();
 
   const body = await request.json().catch(() => ({}));
   const parsed = enrollSchema.safeParse(body);
   if (!parsed.success) return NextResponse.json({ error: "Invalid input." }, { status: 400 });
 
   try {
-    const course = await getCourse(courseId);
+    const course = await query<{ id: string; lecturerId: string }>(
+      `SELECT id, "lecturerId" FROM "Course" WHERE id = $1 OR lower(code) = lower($1) LIMIT 1`,
+      [courseKey]
+    ).then((rows) => rows[0] ?? null);
     if (!course) return NextResponse.json({ error: "Course not found." }, { status: 404 });
+    const courseId = course.id;
 
     let studentId = session.userId;
     if (parsed.data.studentEmail) {
