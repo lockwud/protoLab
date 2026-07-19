@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getSessionPayload } from "@/lib/session";
-import { query, DatabaseUnavailableError } from "@/lib/db";
+import { query, queryOne, DatabaseUnavailableError } from "@/lib/db";
 import { createId } from "@/lib/id";
 
 const createSchema = z.object({
@@ -22,6 +22,12 @@ export async function POST(request: Request) {
   }
 
   try {
+    const project = await queryOne<{ ownerId: string }>(`SELECT "ownerId" FROM "Project" WHERE id = $1`, [parsed.data.projectId]);
+    if (!project) return NextResponse.json({ error: "Prototype not found." }, { status: 404 });
+    if (session.role === "STUDENT" && project.ownerId !== session.userId) {
+      return NextResponse.json({ error: "You do not own this prototype." }, { status: 403 });
+    }
+
     const id = createId("mls_");
     const rows = await query(
       `INSERT INTO "Milestone" (id, "projectId", title, description, "ownerId", "dueDate", "order")

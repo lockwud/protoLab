@@ -13,6 +13,16 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
   try {
     const course = await getCourse(id);
     if (!course) return NextResponse.json({ error: "Course not found." }, { status: 404 });
+    if (session.role === "LECTURER" && course.lecturerId !== session.userId) {
+      return NextResponse.json({ error: "You do not teach this course." }, { status: 403 });
+    }
+    if (session.role === "STUDENT") {
+      const enrollment = await query<{ id: string }>(
+        `SELECT id FROM "Enrollment" WHERE "courseId" = $1 AND "studentId" = $2`,
+        [id, session.userId]
+      );
+      if (!enrollment[0]) return NextResponse.json({ error: "You are not enrolled in this course." }, { status: 403 });
+    }
     const [assignments, enrollments] = await Promise.all([
       listAssignmentsForCourse(id),
       session.role === "STUDENT" ? Promise.resolve([]) : listEnrollmentsForCourse(id),
@@ -38,10 +48,16 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   if (!parsed.success) return NextResponse.json({ error: "Invalid input." }, { status: 400 });
 
   try {
+    const course = await getCourse(courseId);
+    if (!course) return NextResponse.json({ error: "Course not found." }, { status: 404 });
+
     let studentId = session.userId;
     if (parsed.data.studentEmail) {
       if (session.role === "STUDENT") {
         return NextResponse.json({ error: "Students can only enroll themselves." }, { status: 403 });
+      }
+      if (session.role === "LECTURER" && course.lecturerId !== session.userId) {
+        return NextResponse.json({ error: "You do not teach this course." }, { status: 403 });
       }
       const rows = await query<{ id: string }>(`SELECT id FROM "User" WHERE email = $1`, [
         parsed.data.studentEmail,

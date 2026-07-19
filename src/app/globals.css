@@ -59,10 +59,47 @@
 
 body {
   background:
-    linear-gradient(var(--line) 1px, transparent 1px) 0 0 / 100% 28px,
+    repeating-radial-gradient(circle at 72% 14%, rgba(20, 22, 31, 0.035) 0 1px, transparent 1px 34px),
+    radial-gradient(circle at 70% 18%, rgba(55, 48, 224, 0.035), transparent 34%),
+    radial-gradient(circle at 14% 82%, rgba(198, 255, 61, 0.05), transparent 30%),
     var(--background);
   color: var(--foreground);
   font-family: var(--font-sans);
+}
+
+.landing-shell {
+  text-shadow: 0 1px 0 rgba(246, 245, 241, 0.88);
+}
+
+.landing-ambient {
+  position: absolute;
+  inset: 8% -18% 10%;
+  z-index: -1;
+  pointer-events: none;
+  opacity: 0.72;
+  background:
+    radial-gradient(circle at 48% 38%, rgba(246, 245, 241, 0.96) 0 24%, rgba(246, 245, 241, 0.64) 39%, transparent 62%),
+    repeating-radial-gradient(circle at 52% 42%, rgba(55, 48, 224, 0.12) 0 1px, transparent 1px 54px),
+    radial-gradient(circle at 30% 62%, rgba(198, 255, 61, 0.16), transparent 34%),
+    radial-gradient(circle at 76% 30%, rgba(255, 157, 46, 0.12), transparent 30%);
+  filter: blur(0.2px);
+  animation: landing-ambient 18s ease-in-out infinite alternate;
+}
+
+@keyframes landing-ambient {
+  from {
+    transform: translate3d(-1.5%, -1%, 0) scale(0.985) rotate(-1.5deg);
+  }
+
+  to {
+    transform: translate3d(1.5%, 1%, 0) scale(1.025) rotate(1.5deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .landing-ambient {
+    animation: none;
+  }
 }
 
 .font-display {

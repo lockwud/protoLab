@@ -124,6 +124,75 @@ export interface InnovationRepositoryEntry {
   publishedAt: string;
 }
 
+export type LabMode = "NETWORKING" | "ELECTRONICS" | "SOFTWARE" | "MIXED";
+
+export interface LabWorkspace {
+  id: string;
+  projectId: string;
+  title: string;
+  mode: LabMode;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ComponentInventory {
+  id: string;
+  name: string;
+  category: string;
+  kind: string;
+  description: string | null;
+  metadata: Record<string, unknown>;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface LabNode {
+  id: string;
+  workspaceId: string;
+  componentId: string | null;
+  label: string;
+  type: string;
+  x: number;
+  y: number;
+  config: Record<string, unknown>;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface LabConnection {
+  id: string;
+  workspaceId: string;
+  sourceNodeId: string;
+  targetNodeId: string;
+  label: string | null;
+  connectionType: string;
+  config: Record<string, unknown>;
+  createdAt: string;
+}
+
+export interface LabValidation {
+  id: string;
+  workspaceId: string;
+  status: "PASS" | "WARN" | "FAIL";
+  issues: Array<{ severity: "info" | "warning" | "error"; message: string }>;
+  createdAt: string;
+}
+
+export interface LabSimulation {
+  id: string;
+  workspaceId: string;
+  status: "PASS" | "WARN" | "FAIL";
+  summary: string;
+  traces: Array<{
+    type: "network" | "electronics" | "software" | "system";
+    title: string;
+    detail: string;
+    status: "pass" | "warn" | "fail";
+  }>;
+  metrics: Record<string, unknown>;
+  createdAt: string;
+}
+
 export interface Notification {
   id: string;
   userId: string;

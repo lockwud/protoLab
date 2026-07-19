@@ -11,7 +11,6 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
 }
 
 enum Role {
@@ -65,7 +64,7 @@ model User {
   bio           String?
   githubUsername String?
   createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  updatedAt     DateTime @default(now()) @updatedAt
 
   coursesTeaching   Course[]           @relation("CourseLecturer")
   enrollments       Enrollment[]
@@ -76,8 +75,22 @@ model User {
   notifications     Notification[]
   documents         Document[]
   repositoryEntries InnovationRepository[] @relation("RepoAuthor")
+  notificationSettings UserNotificationSettings?
 
   @@index([email])
+}
+
+model UserNotificationSettings {
+  id                      String   @id @default(cuid())
+  userId                  String   @unique
+  user                    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  feedbackNotifications   Boolean  @default(true)
+  milestoneNotifications  Boolean  @default(true)
+  taskNotifications       Boolean  @default(false)
+  githubIntegration       Boolean  @default(false)
+  auditMode               Boolean  @default(false)
+  createdAt               DateTime @default(now())
+  updatedAt               DateTime @default(now()) @updatedAt
 }
 
 model Course {
@@ -88,7 +101,7 @@ model Course {
   lecturerId  String
   lecturer    User     @relation("CourseLecturer", fields: [lecturerId], references: [id])
   createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  updatedAt   DateTime @default(now()) @updatedAt
 
   enrollments Enrollment[]
   assignments Assignment[]
@@ -115,7 +128,7 @@ model Assignment {
   status      AssignmentStatus @default(DRAFT)
   dueDate     DateTime?
   createdAt   DateTime         @default(now())
-  updatedAt   DateTime         @updatedAt
+  updatedAt   DateTime         @default(now()) @updatedAt
 
   submissions Submission[]
   projects    Project[]
@@ -133,7 +146,7 @@ model Submission {
   grade        Float?
   submittedAt  DateTime?
   createdAt    DateTime         @default(now())
-  updatedAt    DateTime         @updatedAt
+  updatedAt    DateTime         @default(now()) @updatedAt
 
   feedback     Feedback[]
 
@@ -152,13 +165,14 @@ model Project {
   githubRepoUrl String?
   status        String   @default("PLANNING")
   createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  updatedAt     DateTime @default(now()) @updatedAt
 
   milestones    Milestone[]
   documents     Document[]
   feedback      Feedback[]
   aiSessions    AiSession[]
   repositoryEntry InnovationRepository?
+  labWorkspace  LabWorkspace?
 }
 
 model Milestone {
@@ -173,7 +187,7 @@ model Milestone {
   owner       User            @relation(fields: [ownerId], references: [id])
   order       Int             @default(0)
   createdAt   DateTime        @default(now())
-  updatedAt   DateTime        @updatedAt
+  updatedAt   DateTime        @default(now()) @updatedAt
 }
 
 model Feedback {
@@ -199,7 +213,7 @@ model Document {
   type      String   @default("REPORT")
   content   String
   createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  updatedAt DateTime @default(now()) @updatedAt
 }
 
 model AiSession {
@@ -233,4 +247,92 @@ model Notification {
   read      Boolean          @default(false)
   link      String?
   createdAt DateTime         @default(now())
+}
+
+model LabWorkspace {
+  id        String   @id @default(cuid())
+  projectId String   @unique
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  title     String
+  mode      String   @default("NETWORKING")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+
+  nodes       LabNode[]
+  connections LabConnection[]
+  validations LabValidation[]
+  simulations LabSimulation[]
+}
+
+model ComponentInventory {
+  id          String   @id
+  name        String
+  category    String
+  kind        String
+  description String?
+  metadata    Json     @default("{}")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @default(now()) @updatedAt
+
+  nodes LabNode[]
+}
+
+model LabNode {
+  id          String   @id @default(cuid())
+  workspaceId String
+  workspace   LabWorkspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  componentId String?
+  component   ComponentInventory? @relation(fields: [componentId], references: [id])
+  label       String
+  type        String
+  x           Float    @default(80)
+  y           Float    @default(80)
+  config      Json     @default("{}")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @default(now()) @updatedAt
+
+  outgoingConnections LabConnection[] @relation("SourceNode")
+  incomingConnections LabConnection[] @relation("TargetNode")
+
+  @@index([workspaceId])
+}
+
+model LabConnection {
+  id            String   @id @default(cuid())
+  workspaceId   String
+  workspace     LabWorkspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  sourceNodeId  String
+  sourceNode    LabNode @relation("SourceNode", fields: [sourceNodeId], references: [id], onDelete: Cascade)
+  targetNodeId  String
+  targetNode    LabNode @relation("TargetNode", fields: [targetNodeId], references: [id], onDelete: Cascade)
+  label         String?
+  connectionType String @default("ethernet")
+  config        Json    @default("{}")
+  createdAt     DateTime @default(now())
+
+  @@index([workspaceId])
+}
+
+model LabValidation {
+  id          String   @id @default(cuid())
+  workspaceId String
+  workspace   LabWorkspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  status      String
+  issues      Json     @default("[]")
+  createdAt   DateTime @default(now())
+
+  @@index([workspaceId])
+}
+
+model LabSimulation {
+  id          String   @id @default(cuid())
+  workspaceId String
+  workspace   LabWorkspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  status      String
+  summary     String
+  traces      Json     @default("[]")
+  metrics     Json     @default("{}")
+  createdAt   DateTime @default(now())
+
+  @@index([workspaceId])
 }

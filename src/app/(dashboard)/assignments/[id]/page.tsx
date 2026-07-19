@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { getCurrentUser } from "@/lib/session";
-import { getAssignment, getSubmissionForStudent, listSubmissionsForAssignment } from "@/lib/data";
+import { getAssignment, getCourse, getSubmissionForStudent, listCoursesForStudent, listSubmissionsForAssignment } from "@/lib/data";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { SubmissionForm } from "./submission-form";
@@ -13,6 +13,14 @@ export default async function AssignmentDetailPage({ params }: { params: Promise
 
   const assignment = await getAssignment(id);
   if (!assignment) notFound();
+  if (user.role === "STUDENT") {
+    const courses = await listCoursesForStudent(user.id);
+    if (!courses.some((course) => course.id === assignment.courseId)) notFound();
+  }
+  if (user.role === "LECTURER") {
+    const course = await getCourse(assignment.courseId);
+    if (!course || course.lecturerId !== user.id) notFound();
+  }
 
   return (
     <div className="mx-auto max-w-3xl">

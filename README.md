@@ -89,6 +89,10 @@ Visit `http://localhost:3000`.
 - **GitHub integration**: set `GITHUB_TOKEN` (a personal access token with
   `repo` scope is enough for read access). Without it, you can still store a
   repo URL manually on a project; live GitHub status is simply unavailable.
+- **GitHub OAuth login**: create a GitHub OAuth App and set `GITHUB_CLIENT_ID`
+  plus `GITHUB_CLIENT_SECRET`. For local development use homepage
+  `http://localhost:3000` and callback
+  `http://localhost:3000/api/auth/github/callback`.
 
 ## Using the real Prisma Client (optional, on a machine with normal internet access)
 

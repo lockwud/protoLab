@@ -30,6 +30,19 @@ export async function POST(request: Request) {
   }
 
   try {
+    if (parsed.data.submissionId && session.role !== "ADMIN") {
+      const access = await queryOne<{ lecturerId: string }>(
+        `SELECT c."lecturerId"
+         FROM "Submission" s
+         JOIN "Assignment" a ON a.id = s."assignmentId"
+         JOIN "Course" c ON c.id = a."courseId"
+         WHERE s.id = $1`,
+        [parsed.data.submissionId]
+      );
+      if (!access) return NextResponse.json({ error: "Submission not found." }, { status: 404 });
+      if (access.lecturerId !== session.userId) return NextResponse.json({ error: "You do not teach this submission's course." }, { status: 403 });
+    }
+
     const id = createId("fbk_");
     const rows = await query(
       `INSERT INTO "Feedback" (id, "projectId", "submissionId", "authorId", content, rating)

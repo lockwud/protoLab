@@ -12,6 +12,9 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
   try {
     const project = await getProject(id);
     if (!project) return NextResponse.json({ error: "Prototype not found." }, { status: 404 });
+    if (session.role === "STUDENT" && project.ownerId !== session.userId) {
+      return NextResponse.json({ error: "Prototype not found." }, { status: 404 });
+    }
     const [milestones, feedback] = await Promise.all([
       listMilestonesForProject(id),
       listFeedbackForProject(id),

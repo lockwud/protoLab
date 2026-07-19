@@ -25,6 +25,16 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   }
 
   try {
+    const assignment = await query<{ id: string; status: string }>(
+      `SELECT a.id, a.status
+       FROM "Assignment" a
+       JOIN "Enrollment" e ON e."courseId" = a."courseId"
+       WHERE a.id = $1 AND e."studentId" = $2`,
+      [assignmentId, session.userId]
+    );
+    if (!assignment[0]) return NextResponse.json({ error: "Assignment not found for your enrolled courses." }, { status: 404 });
+    if (assignment[0].status !== "PUBLISHED") return NextResponse.json({ error: "This assignment is not open for submission." }, { status: 403 });
+
     const rows = await query(
       `INSERT INTO "Submission" (id, "assignmentId", "studentId", content, "fileUrl", status, "submittedAt")
        VALUES ($1, $2, $3, $4, $5, 'SUBMITTED', now())

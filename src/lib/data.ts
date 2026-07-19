@@ -4,6 +4,12 @@ import type {
   Course,
   Enrollment,
   Feedback,
+  ComponentInventory,
+  LabConnection,
+  LabNode,
+  LabSimulation,
+  LabValidation,
+  LabWorkspace,
   Milestone,
   Notification,
   Project,
@@ -113,6 +119,47 @@ export function getProject(id: string) {
   return queryOne<Project>(`SELECT * FROM "Project" WHERE id = $1`, [id]);
 }
 
+export async function getOrCreateLabWorkspace(projectId: string, title: string) {
+  const existing = await queryOne<LabWorkspace>(`SELECT * FROM "LabWorkspace" WHERE "projectId" = $1`, [projectId]);
+  if (existing) return existing;
+  const { createId } = await import("./id");
+  const rows = await query<LabWorkspace>(
+    `INSERT INTO "LabWorkspace" (id, "projectId", title, mode)
+     VALUES ($1, $2, $3, 'MIXED') RETURNING *`,
+    [createId("lab_"), projectId, `${title} Build Lab`]
+  );
+  return rows[0];
+}
+
+export function listComponentInventory() {
+  return query<ComponentInventory>(`SELECT * FROM "ComponentInventory" ORDER BY category ASC, name ASC`);
+}
+
+export function listLabNodes(workspaceId: string) {
+  return query<LabNode>(`SELECT * FROM "LabNode" WHERE "workspaceId" = $1 ORDER BY "createdAt" ASC`, [workspaceId]);
+}
+
+export function listLabConnections(workspaceId: string) {
+  return query<LabConnection>(
+    `SELECT * FROM "LabConnection" WHERE "workspaceId" = $1 ORDER BY "createdAt" ASC`,
+    [workspaceId]
+  );
+}
+
+export function latestLabValidation(workspaceId: string) {
+  return queryOne<LabValidation>(
+    `SELECT * FROM "LabValidation" WHERE "workspaceId" = $1 ORDER BY "createdAt" DESC LIMIT 1`,
+    [workspaceId]
+  );
+}
+
+export function latestLabSimulation(workspaceId: string) {
+  return queryOne<LabSimulation>(
+    `SELECT * FROM "LabSimulation" WHERE "workspaceId" = $1 ORDER BY "createdAt" DESC LIMIT 1`,
+    [workspaceId]
+  );
+}
+
 // ---- Milestones ----
 export function listMilestonesForProject(projectId: string) {
   return query<Milestone>(`SELECT * FROM "Milestone" WHERE "projectId" = $1 ORDER BY "order" ASC`, [
@@ -156,4 +203,78 @@ export async function notify(
      VALUES ($1, $2, $3, $4, $5, $6)`,
     [createId("ntf_"), userId, type, title, message, link ?? null]
   );
+}
+
+// ---- User Notification Settings ----
+export function getUserNotificationSettings(userId: string) {
+  return queryOne<{
+    id: string;
+    userId: string;
+    feedbackNotifications: boolean;
+    milestoneNotifications: boolean;
+    taskNotifications: boolean;
+    githubIntegration: boolean;
+    auditMode: boolean;
+    createdAt: string;
+    updatedAt: string;
+  }>(
+    `SELECT * FROM "UserNotificationSettings" WHERE "userId" = $1`,
+    [userId]
+  );
+}
+
+export async function createOrUpdateUserNotificationSettings(
+  userId: string,
+  settings: {
+    feedbackNotifications?: boolean;
+    milestoneNotifications?: boolean;
+    taskNotifications?: boolean;
+    githubIntegration?: boolean;
+    auditMode?: boolean;
+  }
+) {
+  const { createId } = await import("./id");
+  
+  // Try to get existing settings
+  const existing = await getUserNotificationSettings(userId);
+  
+  if (existing) {
+    // Update existing
+    await query(
+      `UPDATE "UserNotificationSettings" 
+       SET "feedbackNotifications" = COALESCE($2, "feedbackNotifications"),
+           "milestoneNotifications" = COALESCE($3, "milestoneNotifications"),
+           "taskNotifications" = COALESCE($4, "taskNotifications"),
+           "githubIntegration" = COALESCE($5, "githubIntegration"),
+           "auditMode" = COALESCE($6, "auditMode"),
+           "updatedAt" = now()
+       WHERE "userId" = $1`,
+      [
+        userId,
+        settings.feedbackNotifications ?? null,
+        settings.milestoneNotifications ?? null,
+        settings.taskNotifications ?? null,
+        settings.githubIntegration ?? null,
+        settings.auditMode ?? null,
+      ]
+    );
+  } else {
+    // Create new with defaults
+    await query(
+      `INSERT INTO "UserNotificationSettings" 
+       (id, "userId", "feedbackNotifications", "milestoneNotifications", "taskNotifications", "githubIntegration", "auditMode")
+       VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+      [
+        createId("uns_"),
+        userId,
+        settings.feedbackNotifications ?? true,
+        settings.milestoneNotifications ?? true,
+        settings.taskNotifications ?? false,
+        settings.githubIntegration ?? false,
+        settings.auditMode ?? false,
+      ]
+    );
+  }
+  
+  return getUserNotificationSettings(userId);
 }

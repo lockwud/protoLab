@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getSessionPayload } from "@/lib/session";
 import { getAssignment, listSubmissionsForAssignment, getSubmissionForStudent } from "@/lib/data";
-import { DatabaseUnavailableError } from "@/lib/db";
+import { queryOne, DatabaseUnavailableError } from "@/lib/db";
 
 export async function GET(_request: Request, { params }: { params: Promise<{ id: string }> }) {
   const session = await getSessionPayload();
@@ -11,6 +11,19 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
   try {
     const assignment = await getAssignment(id);
     if (!assignment) return NextResponse.json({ error: "Assignment not found." }, { status: 404 });
+
+    if (session.role === "STUDENT") {
+      const enrollment = await queryOne<{ id: string }>(
+        `SELECT e.id
+         FROM "Enrollment" e
+         WHERE e."courseId" = $1 AND e."studentId" = $2`,
+        [assignment.courseId, session.userId]
+      );
+      if (!enrollment) return NextResponse.json({ error: "Assignment not found." }, { status: 404 });
+    } else if (session.role === "LECTURER") {
+      const course = await queryOne<{ lecturerId: string }>(`SELECT "lecturerId" FROM "Course" WHERE id = $1`, [assignment.courseId]);
+      if (!course || course.lecturerId !== session.userId) return NextResponse.json({ error: "Assignment not found." }, { status: 404 });
+    }
 
     if (session.role === "STUDENT") {
       const submission = await getSubmissionForStudent(id, session.userId);

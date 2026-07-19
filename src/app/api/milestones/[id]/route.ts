@@ -20,11 +20,17 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   if (!parsed.success) return NextResponse.json({ error: "Invalid input." }, { status: 400 });
 
   try {
-    const milestone = await queryOne<{ ownerId: string; projectId: string }>(
-      `SELECT "ownerId", "projectId" FROM "Milestone" WHERE id = $1`,
+    const milestone = await queryOne<{ ownerId: string; projectId: string; projectOwnerId: string }>(
+      `SELECT m."ownerId", m."projectId", p."ownerId" as "projectOwnerId"
+       FROM "Milestone" m
+       JOIN "Project" p ON p.id = m."projectId"
+       WHERE m.id = $1`,
       [id]
     );
     if (!milestone) return NextResponse.json({ error: "Milestone not found." }, { status: 404 });
+    if (session.role === "STUDENT" && milestone.projectOwnerId !== session.userId) {
+      return NextResponse.json({ error: "You do not own this prototype." }, { status: 403 });
+    }
 
     const sets: string[] = [];
     const values: unknown[] = [];

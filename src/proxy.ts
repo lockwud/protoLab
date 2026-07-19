@@ -24,8 +24,11 @@ export async function proxy(request: NextRequest) {
   const isProtectedPage = pathname.startsWith("/dashboard") ||
     pathname.startsWith("/courses") ||
     pathname.startsWith("/assignments") ||
+    pathname.startsWith("/build-lab") ||
     pathname.startsWith("/projects") ||
+    pathname.startsWith("/quiet-display") ||
     pathname.startsWith("/repository") ||
+    pathname.startsWith("/resources") ||
     pathname.startsWith("/analytics") ||
     pathname.startsWith("/notifications") ||
     pathname.startsWith("/settings");

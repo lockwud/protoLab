@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { getCurrentUser } from "@/lib/session";
-import { getCourse, listAssignmentsForCourse, listEnrollmentsForCourse } from "@/lib/data";
+import { getCourse, listAssignmentsForCourse, listCoursesForStudent, listEnrollmentsForCourse } from "@/lib/data";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { CreateAssignmentForm } from "./create-assignment-form";
@@ -13,6 +13,11 @@ export default async function CourseDetailPage({ params }: { params: Promise<{ i
 
   const course = await getCourse(id);
   if (!course) notFound();
+  if (user.role === "LECTURER" && course.lecturerId !== user.id) notFound();
+  if (user.role === "STUDENT") {
+    const courses = await listCoursesForStudent(user.id);
+    if (!courses.some((item) => item.id === id)) notFound();
+  }
 
   const [assignments, enrollments] = await Promise.all([
     listAssignmentsForCourse(id),
