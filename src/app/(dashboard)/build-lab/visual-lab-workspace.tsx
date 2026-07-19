@@ -440,39 +440,39 @@ function WebBlockPreview({ node }: { node: LabNode }) {
   const variant = typeof node.config.variant === "string" ? node.config.variant : "card";
   if (variant === "nav") {
     return (
-      <div className="rounded-md border border-border bg-background p-3">
+      <div className="rounded-md border border-sky-200 bg-gradient-to-r from-sky-500 to-indigo-600 p-3 text-white shadow-sm">
         <div className="flex items-center justify-between gap-3">
           <div className="font-display text-sm font-semibold">ProtoLab</div>
-          <div className="flex gap-2 text-[10px] text-muted-foreground"><span>Work</span><span>Review</span><span>Ship</span></div>
+          <div className="flex gap-2 text-[10px] text-white/80"><span>Work</span><span>Review</span><span>Ship</span></div>
         </div>
       </div>
     );
   }
   if (variant === "hero") {
     return (
-      <div className="rounded-lg bg-foreground p-4 text-background">
+      <div className="rounded-lg bg-[radial-gradient(circle_at_top_left,#d9ff66,transparent_38%),linear-gradient(135deg,#171717,#4f46e5)] p-4 text-white shadow-sm">
         <div className="max-w-xs font-display text-xl font-semibold">Build a working prototype</div>
-        <p className="mt-2 max-w-sm text-[11px] leading-4 text-background/70">Design the web screen, connect APIs, and prepare review evidence.</p>
-        <div className="mt-4 h-7 w-28 rounded-full bg-accent" />
+        <p className="mt-2 max-w-sm text-[11px] leading-4 text-white/75">Design the web screen, connect APIs, and prepare review evidence.</p>
+        <div className="mt-4 h-7 w-28 rounded-full bg-lime-300 shadow-[0_0_24px_rgba(217,255,102,0.45)]" />
       </div>
     );
   }
   if (variant === "form") {
     return (
-      <div className="rounded-lg border border-border bg-background p-4">
-        <div className="mb-3 text-xs font-semibold">Intake form</div>
-        <div className="space-y-2"><div className="h-8 rounded border border-border bg-card" /><div className="h-8 rounded border border-border bg-card" /><div className="h-8 w-24 rounded bg-foreground" /></div>
+      <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-4 shadow-sm">
+        <div className="mb-3 text-xs font-semibold text-emerald-950">Intake form</div>
+        <div className="space-y-2"><div className="h-8 rounded border border-emerald-200 bg-white" /><div className="h-8 rounded border border-emerald-200 bg-white" /><div className="h-8 w-24 rounded bg-emerald-500" /></div>
       </div>
     );
   }
   if (variant === "button") {
-    return <div className="grid h-8 place-items-center rounded-full bg-accent px-4 text-xs font-semibold text-accent-foreground">Primary action</div>;
+    return <div className="grid h-9 place-items-center rounded-full bg-gradient-to-r from-fuchsia-500 to-orange-400 px-4 text-xs font-semibold text-white shadow-[0_12px_28px_rgba(217,70,239,0.28)]">Primary action</div>;
   }
   return (
-    <div className="rounded-lg border border-border bg-background p-4">
-      <div className="text-xs font-semibold">{node.label}</div>
-      <div className="mt-4 h-8 w-16 rounded bg-accent" />
-      <div className="mt-3 space-y-2"><div className="h-2 rounded bg-muted" /><div className="h-2 w-2/3 rounded bg-muted" /></div>
+    <div className="rounded-lg border border-violet-200 bg-gradient-to-br from-violet-50 to-pink-50 p-4 shadow-sm">
+      <div className="text-xs font-semibold text-violet-950">{node.label}</div>
+      <div className="mt-4 h-8 w-16 rounded bg-violet-500" />
+      <div className="mt-3 space-y-2"><div className="h-2 rounded bg-violet-200" /><div className="h-2 w-2/3 rounded bg-pink-200" /></div>
     </div>
   );
 }
